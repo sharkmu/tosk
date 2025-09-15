@@ -1,6 +1,12 @@
 [package]
 name = "tosk"
-version = "0.1.0"
+description = "A very lightweight, easy-to-use CLI task / todo list app written in Rust"
+authors = ["sharkmu"]
+repository = "https://github.com/sharkmu/tosk"
+license = "MIT"
+license-file = "LICENSE"
+readme = "README.md"
+version = "1.0.0"
 edition = "2024"
 
 [dependencies]
