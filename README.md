@@ -2,6 +2,13 @@
 A very lightweight, easy-to-use CLI task / todo list app written in Rust, inspired by [todo](https://github.com/sioodmy/todo)
 
 ## Installation
+### Install with Cargo
+You can easily install **tosk** with Cargo. Make sure you have it installed and Rust too. 
+```bash
+cargo install tosk
+```
+
+### Install with git
 - clone the repository: `git clone https://github.com/sharkmu/tosk.git`
 - build the repository with [Cargo](https://crates.io/): `cargo run`
 
