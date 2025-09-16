@@ -20,8 +20,9 @@ fn main() {
                 let task = &args[2];
                 tosk::add(task.to_string());
             } 
-            else if args.len() > 3{
-                eprintln!("Too many arguments. If your task contains more than 1 word, put them in \"")
+            else if args.len() > 3 {
+                let task = args[2..].join(" ");
+                tosk::add(task);
             } else {
                 eprintln!("Error: No task specified.");
             }
