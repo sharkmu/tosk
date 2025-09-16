@@ -26,5 +26,8 @@ You can also collaborate by making an issue or giving feedback. Or even just by 
 - To list tasks: `tosk list`
 - To access a similiar help message: `tosk help`
 
+## Configurability
+At the moment there is only one setting that you can change. You can enable/disable the archive feature. To do this, open `.env` and change the value of the `ARCHIVE_ENABLED` variable to either `true` or `false`.
+
 ## Origin of name
 The project name (**tosk**) is a mixture of **to**do and ta**sk**
