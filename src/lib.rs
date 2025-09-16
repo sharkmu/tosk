@@ -8,12 +8,24 @@ pub fn help() {
 }
 
 pub fn list() {
-    let contents = fs::read_to_string("data.txt")
-        .expect("No \"data.txt\" file. Try \"tosk add [task]\" to create said file.");
+    match fs::read_to_string("data.txt") {
+        Ok(contents) => list_cont(contents),
+        Err(_) => create_file("data.txt"),
+    }
+}
 
+fn list_cont(contents: String) {
+    if contents == "" {
+        println!("The task list is empty. To add a task: \"tosk add [TASK]\"");
+    }
     for (index, line) in contents.lines().rev().enumerate() {
         println!("{}. {}", index + 1, line);
     }
+}
+
+fn create_file(path: &str) {
+    println!("The task list is empty. To add a task: \"tosk add [TASK]\"");
+    fs::File::create(path).expect("Cannot create file");
 }
 
 pub fn add(task: String) {
