@@ -3,14 +3,17 @@ use std::io::Write;
 
 mod help_msg;
 
+const DATA_FILE_PATH: &str = concat!(env!("CARGO_HOME"), "\\bin\\data.txt");
+const ARCHIVE_FILE_PATH: &str = concat!(env!("CARGO_HOME"), "\\bin\\archive.txt");
+
 pub fn help() {
     help_msg::text();
 }
 
 pub fn list() {
-    match fs::read_to_string("data.txt") {
+    match fs::read_to_string(DATA_FILE_PATH) {
         Ok(contents) => list_cont(contents),
-        Err(_) => create_file("data.txt", "list"),
+        Err(_) => create_file(DATA_FILE_PATH, "list"),
     }
 }
 
@@ -43,16 +46,16 @@ pub fn add(task: String) {
     let mut file = fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open("data.txt")
+        .open(DATA_FILE_PATH)
         .expect("Cannot open file");
 
     writeln!(file, "{}", task).expect("Cannot write to file");
 }
 
 pub fn remove(task: i32) {
-    match fs::read_to_string("data.txt") {
+    match fs::read_to_string(DATA_FILE_PATH) {
         Ok(contents) => rm_cont(contents, task),
-        Err(_) => create_file("data.txt", "rm"),
+        Err(_) => create_file(DATA_FILE_PATH, "rm"),
     }
 }
 
@@ -69,7 +72,7 @@ fn rm_cont(contents: String, task: i32) {
         archive_removed(removed);
     }
 
-    let mut file = fs::File::create("data.txt").expect("Cannot open file");
+    let mut file = fs::File::create(DATA_FILE_PATH).expect("Cannot open file");
     for line in lines {
         writeln!(file, "{}", line).expect("Cannot write to file");
     }
@@ -79,7 +82,7 @@ fn archive_removed(removed: String) {
     let mut file = fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open("archive.txt")
+        .open(ARCHIVE_FILE_PATH)
         .expect("Cannot open file");
 
     writeln!(file, "{}", removed).expect("Cannot write to file");
