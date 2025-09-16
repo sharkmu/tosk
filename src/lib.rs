@@ -2,6 +2,7 @@ use std::fs;
 use std::io::Write;
 
 mod help_msg;
+mod env;
 
 const DATA_FILE_PATH: &str = concat!(env!("CARGO_HOME"), "\\bin\\data.txt");
 const ARCHIVE_FILE_PATH: &str = concat!(env!("CARGO_HOME"), "\\bin\\archive.txt");
@@ -69,7 +70,9 @@ fn rm_cont(contents: String, task: i32) {
         eprintln!("No such task with that index number!");
     } else {
         let removed = lines.remove(index_to_remove);
-        archive_removed(removed);
+        if env::load() {
+            archive_removed(removed);
+        }
     }
 
     let mut file = fs::File::create(DATA_FILE_PATH).expect("Cannot open file");
