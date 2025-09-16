@@ -10,7 +10,7 @@ pub fn help() {
 pub fn list() {
     match fs::read_to_string("data.txt") {
         Ok(contents) => list_cont(contents),
-        Err(_) => create_file("data.txt"),
+        Err(_) => create_file("data.txt", "list"),
     }
 }
 
@@ -23,8 +23,19 @@ fn list_cont(contents: String) {
     }
 }
 
-fn create_file(path: &str) {
-    println!("The task list is empty. To add a task: \"tosk add [TASK]\"");
+fn create_file(path: &str, origin: &str) {
+    match origin {
+        "list" => {
+            println!("The task list is empty. To add a task: \"tosk add [TASK]\"")
+        }
+        "rm" => {
+            println!("No such task with that index number!")
+        }
+        _ => {
+            println!("No such origin: {}", origin)
+        }
+    }
+    
     fs::File::create(path).expect("Cannot create file");
 }
 
@@ -39,9 +50,13 @@ pub fn add(task: String) {
 }
 
 pub fn remove(task: i32) {
-    let contents = fs::read_to_string("data.txt")
-        .expect("No \"data.txt\" file. Try \"task add [task]\" to create said file.");
+    match fs::read_to_string("data.txt") {
+        Ok(contents) => rm_cont(contents, task),
+        Err(_) => create_file("data.txt", "rm"),
+    }
+}
 
+fn rm_cont(contents: String, task: i32) {
     let mut lines: Vec<String> = contents.lines().map(|line| line.to_string()).collect();
 
     let lines_length: i32 = lines.len().try_into().expect("value error");
@@ -49,10 +64,10 @@ pub fn remove(task: i32) {
 
     if index_to_remove >= lines.len() {
         eprintln!("No such task with that index number!");
+    } else {
+        let removed = lines.remove(index_to_remove);
+        archive_removed(removed);
     }
-
-    let removed = lines.remove(index_to_remove);
-    archive_removed(removed);
 
     let mut file = fs::File::create("data.txt").expect("Cannot open file");
     for line in lines {
