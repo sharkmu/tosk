@@ -1,8 +1,10 @@
 use std::fs;
 use std::io::Write;
 
+mod help_msg;
+
 pub fn help() {
-    println!("help")
+    help_msg::text();
 }
 
 pub fn list() {

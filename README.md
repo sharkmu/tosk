@@ -24,7 +24,7 @@ You can also collaborate by making an issue or giving feedback. Or even just by 
 - To create a new task: `tosk add [task]`
 - To remove / mark as completed a task: `tosk rm [index of task]`
 - To list tasks: `tosk list`
-- To access a similiar help message: `tosk help` - **TODO**
+- To access a similiar help message: `tosk help`
 
 ## Origin of name
 The project name (**tosk**) is a mixture of **to**do and ta**sk**
