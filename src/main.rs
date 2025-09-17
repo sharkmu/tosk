@@ -1,7 +1,28 @@
-use std::env;
+use std::{env, path::PathBuf};
 use tosk;
+use dirs::config_dir;
+use std::fs;
 
 fn main() {
+    let path = config_dir()
+        .unwrap()
+        .join("tosk\\");
+
+    match fs::read_dir(&path) {
+        Ok(_) => handle_args(),
+        Err(_) => create_folder(&path),
+    }
+}
+
+fn create_folder(path: &PathBuf) {
+    if let Err(e) = fs::create_dir_all(path) {
+        eprintln!("Failed to create folder {:?}: {}", path, e);
+    } else {
+        handle_args();
+    }
+}
+
+fn handle_args() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {

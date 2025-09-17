@@ -27,7 +27,16 @@ You can also collaborate by making an issue or giving feedback. Or even just by 
 - To access a similiar help message: `tosk help`
 
 ## Configurability
-At the moment there is only one setting that you can change. You can enable/disable the archive feature. To do this, open `.env` and change the value of the `ARCHIVE_ENABLED` variable to either `true` or `false`.
+At the moment there is only one setting that you can change. You can enable/disable the archive feature.
+
+#### Windows
+On Windows you can do it by going to: `C:\Users\your_username\AppData\Roaming\tosk` and changing the `archive_enabled`'s value
+
+#### Linux
+On Linux you can do it by going to: `/home/your_username/.config/tosk` and changing the `archive_enabled`'s value
+
+#### macOS
+On macOS you can do it by going to: `/Users/your_username/Library/Application Support/tosk` and changing the `archive_enabled`'s value
 
 ## Origin of name
 The project name (**tosk**) is a mixture of **to**do and ta**sk**
