@@ -1,20 +1,30 @@
 use std::fs;
 use std::io::Write;
+use dirs::config_dir;
+use std::path::{PathBuf};
+use once_cell::sync::Lazy;
+
 
 mod help_msg;
 mod config;
 
-const DATA_FILE_PATH: &str = concat!(env!("CARGO_HOME"), "\\bin\\data.txt");
-const ARCHIVE_FILE_PATH: &str = concat!(env!("CARGO_HOME"), "\\bin\\archive.txt");
+static DATA_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| get_path("data"));
+static ARCHIVE_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| get_path("archive"));
+
+fn get_path(file: &str) -> PathBuf {
+    config_dir()
+        .unwrap()
+        .join(format!("tosk/{}.txt", file))
+}
 
 pub fn help() {
     help_msg::text();
 }
 
 pub fn list() {
-    match fs::read_to_string(DATA_FILE_PATH) {
+    match fs::read_to_string(&*DATA_FILE_PATH) {
         Ok(contents) => list_cont(contents),
-        Err(_) => create_file(DATA_FILE_PATH, "list"),
+        Err(_) => create_file(&*DATA_FILE_PATH, "list"),
     }
 }
 
@@ -27,7 +37,7 @@ fn list_cont(contents: String) {
     }
 }
 
-fn create_file(path: &str, origin: &str) {
+fn create_file(path: &PathBuf, origin: &str) {
     match origin {
         "list" => {
             println!("The task list is empty. To add a task: \"tosk add [TASK]\"")
@@ -47,16 +57,16 @@ pub fn add(task: String) {
     let mut file = fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open(DATA_FILE_PATH)
+        .open(&*DATA_FILE_PATH)
         .expect("Cannot open file");
 
     writeln!(file, "{}", task).expect("Cannot write to file");
 }
 
 pub fn remove(task: i32) {
-    match fs::read_to_string(DATA_FILE_PATH) {
+    match fs::read_to_string(&*DATA_FILE_PATH) {
         Ok(contents) => rm_cont(contents, task),
-        Err(_) => create_file(DATA_FILE_PATH, "rm"),
+        Err(_) => create_file(&*DATA_FILE_PATH, "rm"),
     }
 }
 
@@ -75,7 +85,7 @@ fn rm_cont(contents: String, task: i32) {
         }
     }
 
-    let mut file = fs::File::create(DATA_FILE_PATH).expect("Cannot open file");
+    let mut file = fs::File::create(&*DATA_FILE_PATH).expect("Cannot open file");
     for line in lines {
         writeln!(file, "{}", line).expect("Cannot write to file");
     }
@@ -85,7 +95,7 @@ fn archive_removed(removed: String) {
     let mut file = fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open(ARCHIVE_FILE_PATH)
+        .open(&*ARCHIVE_FILE_PATH)
         .expect("Cannot open file");
 
     writeln!(file, "{}", removed).expect("Cannot write to file");
