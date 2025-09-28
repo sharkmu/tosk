@@ -14,7 +14,7 @@ static ARCHIVE_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| get_path("archive"));
 fn get_path(file: &str) -> PathBuf {
     config_dir()
         .unwrap()
-        .join(format!("tosk/{}.txt", file))
+        .join(format!("tosk/{}.dat", file))
 }
 
 pub fn help() {
@@ -38,6 +38,13 @@ fn list_cont(contents: String) {
 }
 
 fn create_file(path: &PathBuf, origin: &str) {
+    if let Some(parent) = path.parent() {
+        if let Err(e) = fs::create_dir_all(parent) {
+            eprintln!("Failed to create parent directories for {:?}: {}", path, e);
+            return;
+        }
+    }
+
     match origin {
         "list" => {
             println!("The task list is empty. To add a task: \"tosk add [TASK]\"")
@@ -49,8 +56,10 @@ fn create_file(path: &PathBuf, origin: &str) {
             println!("No such origin: {}", origin)
         }
     }
-    
-    fs::File::create(path).expect("Cannot create file");
+
+    if let Err(e) = fs::File::create(path) {
+        eprintln!("Cannot create file {:?}: {}", path, e);
+    }
 }
 
 pub fn add(task: String) {
