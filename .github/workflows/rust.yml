@@ -23,5 +23,6 @@ jobs:
       run: |
         cargo run -- list
         cargo run -- add test
+        cargo run -- list
         cargo run -- rm 1
         cargo run -- list
