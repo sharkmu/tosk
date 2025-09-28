@@ -14,7 +14,7 @@ static ARCHIVE_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| get_path("archive"));
 fn get_path(file: &str) -> PathBuf {
     config_dir()
         .unwrap()
-        .join(format!("tosk/{}.txt", file))
+        .join(format!("tosk/{}.dat", file))
 }
 
 pub fn help() {
