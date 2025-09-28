@@ -21,3 +21,5 @@ jobs:
       run: cargo test --verbose
     - name: Actual run tests
       run: cargo run
+    - name: Display list test
+      run: tosk list
