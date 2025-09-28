@@ -22,7 +22,6 @@ pub fn help() {
 }
 
 pub fn list() {
-    println!("{}", DATA_FILE_PATH.display());
     match fs::read_to_string(&*DATA_FILE_PATH) {
         Ok(contents) => list_cont(contents),
         Err(_) => create_file(&*DATA_FILE_PATH, "list"),
