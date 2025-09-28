@@ -6,7 +6,6 @@ A very lightweight, easy-to-use CLI task / todo list app written in Rust, inspir
 </p>
 
 ## Installation
-Currently, it has only been tested on Windows, so it may not work properly on other operating systems.
 ### Install with Cargo
 You can easily install **tosk** with Cargo. Make sure you have it installed and Rust too. 
 ```bash
