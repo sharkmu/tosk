@@ -19,5 +19,9 @@ jobs:
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
-    - name: Actual run tests
-      run: cargo run -- list
+    - name: Run function tests
+      run: |
+        cargo run -- list
+        cargo run -- add test
+        cargo run -- rm 1
+        cargo run -- list
