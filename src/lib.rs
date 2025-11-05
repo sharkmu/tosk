@@ -1,12 +1,20 @@
 use std::fs;
 use std::io::Write;
 use dirs::config_dir;
-use std::path::{PathBuf};
+use std::path::{Path, PathBuf};
 use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
+use chrono::Local;
 
 
 mod help_msg;
 mod config;
+
+#[derive(Serialize, Deserialize)]
+struct DataJson {
+    content: String,
+    creation_time: String,
+}
 
 static DATA_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| get_path("data"));
 static ARCHIVE_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| get_path("archive"));
@@ -14,7 +22,7 @@ static ARCHIVE_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| get_path("archive"));
 fn get_path(file: &str) -> PathBuf {
     config_dir()
         .unwrap()
-        .join(format!("tosk/{}.dat", file))
+        .join(format!("tosk/{}.json", file))
 }
 
 pub fn help() {
@@ -62,14 +70,33 @@ fn create_file(path: &PathBuf, origin: &str) {
     }
 }
 
-pub fn add(task: String) {
-    let mut file = fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&*DATA_FILE_PATH)
-        .expect("Cannot open file");
+pub fn add(content: String) {
+    let entry = DataJson {
+        content: content,
+        creation_time: Local::now().to_rfc3339(),
+    };
+    
 
-    writeln!(file, "{}", task).expect("Cannot write to file");
+    let mut list: Vec<DataJson> = if Path::new(&*DATA_FILE_PATH).exists() {
+        let text = fs::read_to_string(&*DATA_FILE_PATH)
+            .expect("Unable to read JSON file");
+
+        if text.trim().is_empty() {
+            Vec::new()
+        } else {
+            serde_json::from_str(&text)
+                .expect("JSON was not well-formatted")
+        }
+    } else {
+        Vec::new()
+    };
+
+    list.push(entry);
+
+    let json = serde_json::to_string_pretty(&list)
+        .expect("Failed to serialize JSON");
+    fs::write(&*DATA_FILE_PATH, json)
+        .expect("Unable to write JSON file");
 }
 
 pub fn remove(task: i32) {
