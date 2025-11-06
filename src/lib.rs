@@ -10,7 +10,7 @@ use chrono::Local;
 mod help_msg;
 mod config;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct DataJson {
     content: String,
     creation_time: String,
@@ -31,17 +31,22 @@ pub fn help() {
 
 pub fn list() {
     match fs::read_to_string(&*DATA_FILE_PATH) {
-        Ok(contents) => list_cont(contents),
-        Err(_) => create_file(&*DATA_FILE_PATH, "list"),
-    }
+        Ok(text) => list_cont(text),
+        Err(_) => create_file(&*&DATA_FILE_PATH, "list"),
+    };
 }
 
 fn list_cont(contents: String) {
-    if contents == "" {
+    let json: Vec<DataJson> = serde_json::from_str(&contents).expect("JSON was not well-formatted");
+    
+    if json.len() < 1 {
         println!("The task list is empty. To add a task: \"tosk add [TASK]\"");
-    }
-    for (index, line) in contents.lines().rev().enumerate() {
-        println!("{}. {}", index + 1, line);
+    } else {
+        let mut index = 1;
+        for entry in json.iter().rev() {
+            println!("{}. {}", index, entry.content);
+            index += 1;
+        }
     }
 }
 
@@ -65,9 +70,8 @@ fn create_file(path: &PathBuf, origin: &str) {
         }
     }
 
-    if let Err(e) = fs::File::create(path) {
-        eprintln!("Cannot create file {:?}: {}", path, e);
-    }
+    let mut file = fs::File::create(&path).expect("Cannot write to file.");
+    write!(file, "[]").expect("Cannot write to file");
 }
 
 pub fn add(content: String) {
