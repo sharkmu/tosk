@@ -51,6 +51,31 @@ fn list_cont(contents: String) {
     }
 }
 
+pub fn info(task: i32) {
+    let contents = fs::read_to_string(&*DATA_FILE_PATH)
+        .expect("Unable to read JSON file");
+    let json: Vec<DataJson> = serde_json::from_str(&contents)
+        .expect("JSON was not well-formatted");
+
+    let json_length: i32 = json.len().try_into().unwrap();
+    if task > 0 && task < json_length+1 {
+        let index = (json_length - task) as usize;
+        
+        let entry = &json[index];
+        let number_suffix = match task {
+            1 => "st",
+            2 => "nd",
+            3 => "rd",
+            _ => "th",
+        };
+        println!("Here is the information I found on the {}{} entry of the task list:", task, number_suffix);
+        println!("  - content: {}", entry.content);
+        println!("  - creation time: {}", entry.creation_time);
+    } else {
+        println!("No such task with that index number!");
+    }
+}
+
 fn create_file(path: &PathBuf, origin: &str) {
     if let Some(parent) = path.parent() {
         if let Err(e) = fs::create_dir_all(parent) {
