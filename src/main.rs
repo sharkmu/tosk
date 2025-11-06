@@ -51,9 +51,17 @@ fn handle_args() {
         "rm" => {
             if args.len() == 3 {
                 let task = &args[2];
-                match task.trim().parse::<i32>() {
-                    Ok(num) => tosk::remove(num),
-                    Err(_) => eprintln!("Not a number!"),
+                if task.starts_with("-") || task.starts_with("--"){
+                    if task.contains("all") {
+                        tosk::rm_all();
+                    } else {
+                        eprintln!("Not a valid parameter")
+                    }
+                } else {
+                    match task.trim().parse::<i32>() {
+                        Ok(num) => tosk::remove(num),
+                        Err(_) => eprintln!("Not a number!"),
+                    }
                 }
             }
             else if args.len() > 3{

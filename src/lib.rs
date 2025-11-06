@@ -1,5 +1,5 @@
 use core::panic;
-use std::fs;
+use std::{fs, io};
 use std::io::Write;
 use dirs::config_dir;
 use std::path::{Path, PathBuf};
@@ -107,6 +107,24 @@ pub fn add(content: String) {
     };
     
     write_to_json(entry, "data");
+}
+
+pub fn rm_all() {
+    let mut sure = String::new();
+
+    print!("Are you sure that you want to delete all tasks? (Y/n): ");
+    io::stdout().flush().unwrap();
+
+    io::stdin()
+        .read_line(&mut sure)
+        .expect("Failed to read line");
+
+    let sure = sure.trim();
+
+    if sure == "Y" {
+        fs::write(&*DATA_FILE_PATH, "[]")
+            .expect("Unable to write JSON file");
+    }
 }
 
 pub fn remove(task: i32) {
