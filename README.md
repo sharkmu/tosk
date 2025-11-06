@@ -23,7 +23,9 @@ You can also collaborate by making an issue or giving feedback. Or even just by 
 ## How to use?
 - To create a new task: `tosk add [task]`
 - To remove / mark as completed a task: `tosk rm [index of task]`
+- To remove all tasks: `tosk rm --all`
 - To list tasks: `tosk list`
+- To get information on a certain task: `tosk info [index of task]`
 - To access a similiar help message: `tosk help`
 
 ## Configurability

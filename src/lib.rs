@@ -1,12 +1,21 @@
-use std::fs;
+use core::panic;
+use std::{fs, io};
 use std::io::Write;
 use dirs::config_dir;
-use std::path::{PathBuf};
+use std::path::{Path, PathBuf};
 use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
+use chrono::Local;
 
 
 mod help_msg;
 mod config;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct DataJson {
+    content: String,
+    creation_time: String,
+}
 
 static DATA_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| get_path("data"));
 static ARCHIVE_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| get_path("archive"));
@@ -14,7 +23,7 @@ static ARCHIVE_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| get_path("archive"));
 fn get_path(file: &str) -> PathBuf {
     config_dir()
         .unwrap()
-        .join(format!("tosk/{}.dat", file))
+        .join(format!("tosk/{}.json", file))
 }
 
 pub fn help() {
@@ -23,17 +32,47 @@ pub fn help() {
 
 pub fn list() {
     match fs::read_to_string(&*DATA_FILE_PATH) {
-        Ok(contents) => list_cont(contents),
-        Err(_) => create_file(&*DATA_FILE_PATH, "list"),
-    }
+        Ok(text) => list_cont(text),
+        Err(_) => create_file(&*&DATA_FILE_PATH, "list"),
+    };
 }
 
 fn list_cont(contents: String) {
-    if contents == "" {
+    let json: Vec<DataJson> = serde_json::from_str(&contents).expect("JSON was not well-formatted");
+    
+    if json.len() < 1 {
         println!("The task list is empty. To add a task: \"tosk add [TASK]\"");
+    } else {
+        let mut index = 1;
+        for entry in json.iter().rev() {
+            println!("{}. {}", index, entry.content);
+            index += 1;
+        }
     }
-    for (index, line) in contents.lines().rev().enumerate() {
-        println!("{}. {}", index + 1, line);
+}
+
+pub fn info(task: i32) {
+    let contents = fs::read_to_string(&*DATA_FILE_PATH)
+        .expect("Unable to read JSON file");
+    let json: Vec<DataJson> = serde_json::from_str(&contents)
+        .expect("JSON was not well-formatted");
+
+    let json_length: i32 = json.len().try_into().unwrap();
+    if task > 0 && task < json_length+1 {
+        let index = (json_length - task) as usize;
+        
+        let entry = &json[index];
+        let number_suffix = match task {
+            1 => "st",
+            2 => "nd",
+            3 => "rd",
+            _ => "th",
+        };
+        println!("Here is the information I found on the {}{} entry of the task list:", task, number_suffix);
+        println!("  - content: {}", entry.content);
+        println!("  - creation time: {}", entry.creation_time);
+    } else {
+        println!("No such task with that index number!");
     }
 }
 
@@ -57,55 +96,99 @@ fn create_file(path: &PathBuf, origin: &str) {
         }
     }
 
-    if let Err(e) = fs::File::create(path) {
-        eprintln!("Cannot create file {:?}: {}", path, e);
-    }
+    let mut file = fs::File::create(&path).expect("Cannot write to file.");
+    write!(file, "[]").expect("Cannot write to file");
 }
 
-pub fn add(task: String) {
-    let mut file = fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&*DATA_FILE_PATH)
-        .expect("Cannot open file");
+pub fn add(content: String) {
+    let entry = DataJson {
+        content: content,
+        creation_time: Local::now().to_rfc3339(),
+    };
+    
+    write_to_json(entry, "data");
+}
 
-    writeln!(file, "{}", task).expect("Cannot write to file");
+pub fn rm_all() {
+    let mut sure = String::new();
+
+    print!("Are you sure that you want to delete all tasks? (Y/n): ");
+    io::stdout().flush().unwrap();
+
+    io::stdin()
+        .read_line(&mut sure)
+        .expect("Failed to read line");
+
+    let sure = sure.trim();
+
+    if sure == "Y" {
+        fs::write(&*DATA_FILE_PATH, "[]")
+            .expect("Unable to write JSON file");
+    }
 }
 
 pub fn remove(task: i32) {
-    match fs::read_to_string(&*DATA_FILE_PATH) {
-        Ok(contents) => rm_cont(contents, task),
-        Err(_) => create_file(&*DATA_FILE_PATH, "rm"),
-    }
-}
+    let contents = 
+        fs::read_to_string(&*DATA_FILE_PATH).unwrap_or_else(|_| "[]".to_string());
+    let mut json: Vec<DataJson> = 
+        serde_json::from_str(&contents).unwrap_or_else(|_| Vec::new());
 
-fn rm_cont(contents: String, task: i32) {
-    let mut lines: Vec<String> = contents.lines().map(|line| line.to_string()).collect();
-
-    let lines_length: i32 = lines.len().try_into().expect("value error");
-    let index_to_remove = ((task - lines_length) * (-1)) as usize;
-
-    if index_to_remove >= lines.len() {
-        eprintln!("No such task with that index number!");
+    if json.len() < 1 {
+        create_file(&*&DATA_FILE_PATH, "rm");
     } else {
-        let removed = lines.remove(index_to_remove);
-        if config::load() {
-            archive_removed(removed);
-        }
-    }
+        let json_length: i32 = json.len().try_into().unwrap();
+        if task > 0 && task < json_length+1{
+            let index_to_remove = task as usize;
+            let removed = json.remove(json.len() - index_to_remove);
 
-    let mut file = fs::File::create(&*DATA_FILE_PATH).expect("Cannot open file");
-    for line in lines {
-        writeln!(file, "{}", line).expect("Cannot write to file");
+            let new_json = serde_json::to_string_pretty(&json)
+                .expect("Failed to serialize JSON");
+            fs::write(&*DATA_FILE_PATH, new_json)
+                .expect("Unable to write JSON file");
+
+            if config::load() {
+                archive_removed(removed);
+            }
+        } else {
+            println!("No such task with that index number!")
+        }
+        
     }
 }
 
-fn archive_removed(removed: String) {
-    let mut file = fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&*ARCHIVE_FILE_PATH)
-        .expect("Cannot open file");
+fn archive_removed(removed: DataJson) {
+    let entry = DataJson {
+        content: removed.content,
+        creation_time: removed.creation_time,
+    };
+    write_to_json(entry, "archive");
+}
 
-    writeln!(file, "{}", removed).expect("Cannot write to file");
+fn write_to_json(entry: DataJson, file: &str) {
+    let file_path = match file {
+        "data" => &DATA_FILE_PATH,
+        "archive" => &ARCHIVE_FILE_PATH,
+        _ => panic!("Invalid match option!"),
+    };
+
+    let mut list: Vec<DataJson> = if Path::new(file_path.as_path()).exists() {
+        let text = fs::read_to_string(file_path.as_path())
+            .expect("Unable to read JSON file");
+
+        if text.trim().is_empty() {
+            Vec::new()
+        } else {
+            serde_json::from_str(&text)
+                .expect("JSON was not well-formatted")
+        }
+    } else {
+        Vec::new()
+    };
+
+    list.push(entry);
+
+    let json = serde_json::to_string_pretty(&list)
+        .expect("Failed to serialize JSON");
+    fs::write(file_path.as_path(), json)
+        .expect("Unable to write JSON file");
 }
