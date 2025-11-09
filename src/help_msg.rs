@@ -16,8 +16,14 @@ const HELP: Help = Help(sections!(
             "rm <index of task>" => {
                 ["Delete / mark as completed a task"]
             }
+            "rm --all" => {
+                ["Delete / mark as completed all tasks"]
+            }
             "list" => {
                 ["List all tasks"]
+            }
+            "info <index of task>" => {
+                ["Gives back information on the specified task"]
             }
         }
     }
