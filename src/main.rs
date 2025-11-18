@@ -33,7 +33,8 @@ fn handle_args() {
     let command = &args[1];
 
     match command.as_str() {
-        "list" => {
+        "list" |
+        "ls" => {
             tosk::list();
         }
         "add" => {
