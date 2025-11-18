@@ -19,7 +19,7 @@ const HELP: Help = Help(sections!(
             "rm --all" => {
                 ["Delete / mark as completed all tasks"]
             }
-            "list" => {
+            "list (ls)" => {
                 ["List all tasks"]
             }
             "info <index of task>" => {
