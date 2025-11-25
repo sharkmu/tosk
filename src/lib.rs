@@ -11,7 +11,7 @@ use chrono::Local;
 mod help_msg;
 mod config;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct DataJson {
     content: String,
     creation_time: String,
@@ -33,7 +33,7 @@ pub fn help() {
 pub fn list() {
     match fs::read_to_string(&*DATA_FILE_PATH) {
         Ok(text) => list_cont(text),
-        Err(_) => create_file(&*&DATA_FILE_PATH, "list"),
+        Err(_) => create_file(&*DATA_FILE_PATH, "list"),
     };
 }
 
@@ -122,6 +122,15 @@ pub fn rm_all() {
     let sure = sure.trim();
 
     if sure == "Y" {
+        if config::load() {
+            let contents = fs::read_to_string(&*DATA_FILE_PATH);
+            let json: Vec<DataJson> = serde_json::from_str(&*contents.unwrap())
+                .expect("JSON was not well-formatted");
+            for entry in json.iter() {
+                archive_removed(entry.clone());
+            }
+        }
+
         fs::write(&*DATA_FILE_PATH, "[]")
             .expect("Unable to write JSON file");
     }
@@ -134,7 +143,7 @@ pub fn remove(task: i32) {
         serde_json::from_str(&contents).unwrap_or_else(|_| Vec::new());
 
     if json.len() < 1 {
-        create_file(&*&DATA_FILE_PATH, "rm");
+        create_file(&*DATA_FILE_PATH, "rm");
     } else {
         let json_length: i32 = json.len().try_into().unwrap();
         if task > 0 && task < json_length+1{
