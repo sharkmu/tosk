@@ -101,9 +101,11 @@ fn create_file(path: &PathBuf, origin: &str) {
 }
 
 pub fn add(content: String) {
+    let current_local = Local::now();
+    let formatted_local_time = current_local.format("%Y-%m-%d %H:%M:%S");
     let entry = DataJson {
         content: content,
-        creation_time: Local::now().to_rfc3339(),
+        creation_time: formatted_local_time.to_string(),
     };
     
     write_to_json(entry, "data");
