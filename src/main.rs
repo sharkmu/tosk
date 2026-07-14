@@ -10,7 +10,8 @@ fn main() {
         .join(match os{
             "linux"=>{"tosk/"}
             "windows"=>{"tosk\\"}
-            _ =>{unimplemented!("handle macos correctly")}
+            "macos"=>{"tosk/"}
+            _ =>{unimplemented!("handle error or other os correctly")}
         });
 
     match fs::read_dir(&path) {
