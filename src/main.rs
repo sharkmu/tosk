@@ -4,9 +4,15 @@ use dirs::config_dir;
 use std::fs;
 
 fn main() {
+    let os = std::env::consts::OS;
     let path = config_dir()
         .unwrap()
-        .join("tosk\\");
+        .join(match os{
+            "linux"=>{"tosk/"}
+            "windows"=>{"tosk\\"}
+            "macos"=>{"tosk/"}
+            _ =>{unimplemented!("handle error or other os correctly")}
+        });
 
     match fs::read_dir(&path) {
         Ok(_) => handle_args(),
