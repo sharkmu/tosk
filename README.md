@@ -13,12 +13,15 @@ cargo install tosk
 ```
 
 ### Install with Nix
-Add tosk to the inputs of your flake.nix, and add the package
+Add tosk to the inputs of your flake.nix
 ```nix
 inputs = {
     tosk.url = "github:sharkmu/tosk";
 };
+```
 
+add the package to your list of packages
+```nix
 environment.systemPackages = [
     inputs.tosk.packages.${pkgs.stdenv.hostPlatform.system}.default;
 ];
