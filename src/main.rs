@@ -55,6 +55,7 @@ fn handle_args() {
                 eprintln!("Error: No task specified.");
             }
         }
+        
         "rm" => {
             if args.len() == 3 {
                 let task = &args[2];
@@ -77,6 +78,7 @@ fn handle_args() {
                 eprintln!("Error: No task specified for rm");
             }
         }
+
         "info" => {
             if args.len() == 3 {
                 let task = &args[2];
@@ -91,6 +93,17 @@ fn handle_args() {
                 eprintln!("Error: No task specified for info");
             }
         }
+
+        "edit" => {
+            if args.len() == 3 {
+                let task = &args[2];
+                match task.trim().parse::<i32>() {
+                    Ok(num) => tosk::edit(num),
+                    Err(_) => eprintln!("Not a number!"),
+                }
+            }
+        }
+
         "help" => {
             tosk::help();
         }

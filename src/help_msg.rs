@@ -25,6 +25,9 @@ const HELP: Help = Help(sections!(
             "info <index of task>" => {
                 ["Gives back information on the specified task"]
             }
+            "edit <index of task>" => {
+                ["Prints the old content of the task and saves the new"]
+            }
         }
     }
 ));
