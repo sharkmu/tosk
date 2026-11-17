@@ -175,11 +175,42 @@ pub fn rm_all() {
     }
 }
 
-pub fn remove(task: i32) {
+fn read_json() -> Vec<DataJson> {
     let contents = 
         fs::read_to_string(&*DATA_FILE_PATH).unwrap_or_else(|_| "[]".to_string());
-    let mut json: Vec<DataJson> = 
+    let json: Vec<DataJson> = 
         serde_json::from_str(&contents).unwrap_or_else(|_| Vec::new());
+    json
+}
+
+pub fn reorder(task: i32, new_position: i32) {
+    let mut json: Vec<DataJson> = read_json();
+    match (
+        task > (json.len()) as i32 || task<=0,
+        new_position > (json.len()) as i32 || new_position <= 0
+    ) {
+        (true, true) => {
+            println!("Wrong task number! It must be between 0 and {}", json.len());
+            println!("Wrong position! It must be between 0 and {}", json.len());
+        }
+        (true, false) => {
+            println!("Wrong task number! It must be between 0 and {}", json.len());
+        }
+        (false, true) => {
+            println!("Wrong position! It must be between 0 and {}", json.len());
+        }
+        (false, false) => {
+            let corrected_task = json.len()-1-((task as usize)-1);
+            let corrected_new = json.len()-1-((new_position as usize)-1);
+            let removed = json.remove(corrected_task);
+            json.insert(corrected_new, removed);
+            write_list_to_json(json, &DATA_FILE_PATH);
+        }
+    };
+}
+
+pub fn remove(task: i32) {
+    let mut json = read_json();
 
     if json.len() < 1 {
         create_file(&*DATA_FILE_PATH, "rm");
@@ -220,6 +251,13 @@ fn get_file_path(file: &str) -> PathBuf {
     }
 }
 
+fn write_list_to_json(list: Vec<DataJson>, file_path: &PathBuf) {
+    let json = serde_json::to_string_pretty(&list)
+        .expect("Failed to serialize JSON");
+    fs::write(file_path.as_path(), json)
+        .expect("Unable to write JSON file");
+}
+
 fn write_to_json(entry: DataJson, file: &str) {
     let file_path = get_file_path(file);
     let mut list: Vec<DataJson> = if Path::new(file_path.as_path()).exists() {
@@ -238,11 +276,4 @@ fn write_to_json(entry: DataJson, file: &str) {
 
     list.push(entry);
     write_list_to_json(list, &file_path);
-}
-
-fn write_list_to_json(list: Vec<DataJson>, file_path: &PathBuf) {
-    let json = serde_json::to_string_pretty(&list)
-        .expect("Failed to serialize JSON");
-    fs::write(file_path.as_path(), json)
-        .expect("Unable to write JSON file");
 }

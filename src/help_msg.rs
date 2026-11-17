@@ -28,6 +28,9 @@ const HELP: Help = Help(sections!(
             "edit <index of task>" => {
                 ["Prints the old content of the task and saves the new"]
             }
+            "reorder <old index> <new index>" => {
+                ["Takes the task at the old index and puts it in the new index"]
+            }
         }
     }
 ));

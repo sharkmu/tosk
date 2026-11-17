@@ -104,6 +104,31 @@ fn handle_args() {
             }
         }
 
+        "reorder" => {
+            if args.len() == 4 {
+                let old_pos = &args[2];
+                let new_pos = &args[3];
+
+                match (
+                    old_pos.trim().parse::<i32>(),
+                    new_pos.trim().parse::<i32>()
+                ) {
+                    (Ok(old), Ok(new)) => {
+                        tosk::reorder(old, new);
+                    }
+                    (Err(_), Err(_)) => {
+                        println!("Wrong parameters, \"{}\" and \"{}\" are not numbers!", old_pos, new_pos);
+                    }
+                    (Err(_), _) => {
+                        println!("Wrong first parameter, \"{}\" is not a number!", old_pos);
+                    }
+                    (_, Err(_)) => {
+                        println!("Wrong second parameter, \"{}\" is not a number!", new_pos);
+                    }
+                }
+            }
+        }
+
         "help" => {
             tosk::help();
         }
