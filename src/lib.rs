@@ -79,14 +79,14 @@ pub fn info(task: i32) {
 pub fn edit(task: i32) {
     let contents = fs::read_to_string(&*DATA_FILE_PATH)
         .expect("Unable to read JSON file");
-    let json: Vec<DataJson> = serde_json::from_str(&contents)
+    let mut json: Vec<DataJson> = serde_json::from_str(&contents)
         .expect("JSON was not well-formatted");
 
     let json_length: i32 = json.len().try_into().unwrap();
     if task > 0 && task < json_length+1 {
         let index = (json_length - task) as usize;
         
-        let entry = &json[index];
+        let entry: &mut DataJson = &mut json[index];
         let number_suffix = match task {
             1 => "st",
             2 => "nd",
@@ -94,15 +94,15 @@ pub fn edit(task: i32) {
             _ => "th",
         };
         println!("Here is the old content of the {}{} entry of the task list:", task, number_suffix);
-        print!("{}\ntype in the new content: ", entry.content);
+        print!("{}\nType in the new content: ", entry.content);
         io::stdout().flush().unwrap();
         // without flushing the input is taken first, then the prompt is printed
 
         let mut input = String::new();
         match std::io::stdin().read_line(&mut input) {
             Ok(_) => {
-                remove(task);
-                add(input.trim().to_string());
+                entry.content = input.trim().to_string();
+                write_list_to_json(json, &*DATA_FILE_PATH);
             }
             Err(_) => {
                 println!("Error on reading input!");
@@ -111,7 +111,6 @@ pub fn edit(task: i32) {
     } else {
         println!("No such task with that index number!");
     }
-
 }
 
 fn create_file(path: &PathBuf, origin: &str) {
@@ -213,13 +212,16 @@ fn archive_removed(removed: DataJson) {
     write_to_json(entry, "archive");
 }
 
-fn write_to_json(entry: DataJson, file: &str) {
-    let file_path = match file {
-        "data" => &DATA_FILE_PATH,
-        "archive" => &ARCHIVE_FILE_PATH,
+fn get_file_path(file: &str) -> PathBuf {
+    match file {
+        "data" => DATA_FILE_PATH.to_path_buf(),
+        "archive" => ARCHIVE_FILE_PATH.to_path_buf(),
         _ => panic!("Invalid match option!"),
-    };
+    }
+}
 
+fn write_to_json(entry: DataJson, file: &str) {
+    let file_path = get_file_path(file);
     let mut list: Vec<DataJson> = if Path::new(file_path.as_path()).exists() {
         let text = fs::read_to_string(file_path.as_path())
             .expect("Unable to read JSON file");
@@ -235,7 +237,10 @@ fn write_to_json(entry: DataJson, file: &str) {
     };
 
     list.push(entry);
+    write_list_to_json(list, &file_path);
+}
 
+fn write_list_to_json(list: Vec<DataJson>, file_path: &PathBuf) {
     let json = serde_json::to_string_pretty(&list)
         .expect("Failed to serialize JSON");
     fs::write(file_path.as_path(), json)

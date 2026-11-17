@@ -17,11 +17,11 @@ Add tosk to the inputs of your flake.nix, and add the package
 ```nix
 inputs = {
     tosk.url = "github:sharkmu/tosk";
-}
+};
 
 environment.systemPackages = [
-    inputs.tosk.packages.${pkgs.stdenv.hostPlatform.system}.default
-]
+    inputs.tosk.packages.${pkgs.stdenv.hostPlatform.system}.default;
+];
 ```
 
 ### Install with git
