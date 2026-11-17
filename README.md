@@ -12,6 +12,18 @@ You can easily install **tosk** with Cargo. Make sure you have it installed and 
 cargo install tosk
 ```
 
+### Install with Nix
+Add tosk to the inputs of your flake.nix, and add the package
+```nix
+inputs = {
+    tosk.url = "github:sharkmu/tosk";
+}
+
+environment.systemPackages = [
+    inputs.tosk.packages.${pkgs.stdenv.hostPlatform.system}.default
+]
+```
+
 ### Install with git
 - clone the repository: `git clone https://github.com/sharkmu/tosk.git`
 - build the repository with [Cargo](https://crates.io/): `cargo run`
