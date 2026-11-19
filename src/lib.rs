@@ -134,14 +134,17 @@ fn create_file(path: &PathBuf, origin: &str) {
 pub fn add(content: String) {
     let current_local = Local::now();
     let formatted_local_time = current_local.format("%Y-%m-%d %H:%M:%S");
-    let entries: Vec<DataJson> = content.split("&").map(|task|{
+    let mut entries: Vec<DataJson> = content.split("&").map(|task|{
         DataJson {
             content: task.to_string(),
             creation_time: formatted_local_time.to_string(),
         }
     }).collect();
 
-    write_list_to_json(entries, &*DATA_FILE_PATH);
+
+    let mut list = get_list(&*&DATA_FILE_PATH);
+    list.append(&mut entries);
+    write_list_to_json(list, &*DATA_FILE_PATH);
 }
 
 pub fn rm_all() {
