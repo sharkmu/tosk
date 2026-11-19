@@ -13,47 +13,60 @@ cargo install tosk
 ```
 
 ### Install with Nix
-Add tosk to the inputs of your flake.nix
+Add `tosk` to the inputs of your `flake.nix`:
 ```nix
 inputs = {
     tosk.url = "github:sharkmu/tosk";
 };
 ```
 
-add the package to your list of packages
+Then add the package to your system packages:
 ```nix
 environment.systemPackages = [
-    inputs.tosk.packages.${pkgs.stdenv.hostPlatform.system}.default;
+    inputs.tosk.packages.${pkgs.stdenv.hostPlatform.system}.default
 ];
 ```
 
-### Install with git
-- clone the repository: `git clone https://github.com/sharkmu/tosk.git`
-- build the repository with [Cargo](https://crates.io/): `cargo run`
+### Build from Source
+1. Clone the repository:
+   ```bash
+   git clone [https://github.com/sharkmu/tosk.git](https://github.com/sharkmu/tosk.git)
+   cd tosk
+   ```
+2. Build and run with Cargo:
+   ```bash
+   cargo run
+   ```
 
-## Collaboration
+## Usage
+
+| Action | Command |
+| :--- | :--- |
+| Add a new task | `tosk add <task>` |
+| Remove / complete a task | `tosk rm <index>` |
+| Remove / complete all tasks | `tosk rm --all` |
+| List all tasks | `tosk list` (or `tosk ls`) |
+| View details for a specific task | `tosk info <index>` |
+| Edit an existing task | `tosk edit <index>` |
+| Reorder a task | `tosk reorder <old index> <new index>` |
+| Show the help message | `tosk help` |
+
+## Configuration
+
+Currently, `tosk` supports a single configuration option (`archive_enabled`) to toggle the archive feature. You can modify it in your platform's configuration directory:
+
+* **Linux:** `~/.config/tosk`
+* **macOS:** `~/Library/Application Support/tosk`
+* **Windows:** `%APPDATA%\tosk` (typically `C:\Users\<username>\AppData\Roaming\tosk`)
+
+## Contributing
+
 Feel free to contribute to the project. Be aware that this is a beginner project, so the code may sometimes be a bit harder to read.
-You can also collaborate by making an issue or giving feedback. Or even just by editing this `README.md` and making a PR.
 
-## How to use?
-- To create a new task: `tosk add [task]`
-- To remove / mark as completed a task: `tosk rm [index of task]`
-- To remove all tasks: `tosk rm --all`
-- To list tasks: `tosk list`
-- To get information on a certain task: `tosk info [index of task]`
-- To access a similiar help message: `tosk help`
+You can contribute by:
+* Opening an issue to report bugs or share feedback
+* Submitting a pull request (even small improvements to this `README.md` help!)
 
-## Configurability
-At the moment there is only one setting that you can change. You can enable/disable the archive feature.
+## Name Origin
 
-#### Windows
-On Windows you can do it by going to: `C:\Users\your_username\AppData\Roaming\tosk` and changing the `archive_enabled`'s value
-
-#### Linux
-On Linux you can do it by going to: `/home/your_username/.config/tosk` and changing the `archive_enabled`'s value
-
-#### macOS
-On macOS you can do it by going to: `/Users/your_username/Library/Application Support/tosk` and changing the `archive_enabled`'s value
-
-## Origin of name
 The project name (**tosk**) is a mixture of **to**do and ta**sk**

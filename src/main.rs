@@ -101,10 +101,14 @@ fn handle_args() {
                     Ok(num) => tosk::edit(num),
                     Err(_) => eprintln!("Not a number!"),
                 }
+            } else if args.len() > 3{
+                eprintln!("You can only edit one task at a time.")
+            } else {
+                eprintln!("Error: No task specified for edit");
             }
         }
 
-        "reorder" => {
+        "reorder" | "move" | "reo"=> {
             if args.len() == 4 {
                 let old_pos = &args[2];
                 let new_pos = &args[3];
@@ -127,7 +131,11 @@ fn handle_args() {
                     }
                 }
             } else {
-                eprintln!("Error: Reorder takes 2 arguments!");
+                if command.as_str() == "move" {
+                    eprintln!("Error: Move takes 2 arguments!");
+                } else {
+                    eprintln!("Error: Reorder takes 2 arguments!");
+                }
             }
         }
 
