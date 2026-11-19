@@ -55,6 +55,7 @@ fn handle_args() {
                 eprintln!("Error: No task specified.");
             }
         }
+        
         "rm" => {
             if args.len() == 3 {
                 let task = &args[2];
@@ -77,6 +78,7 @@ fn handle_args() {
                 eprintln!("Error: No task specified for rm");
             }
         }
+
         "info" => {
             if args.len() == 3 {
                 let task = &args[2];
@@ -91,6 +93,44 @@ fn handle_args() {
                 eprintln!("Error: No task specified for info");
             }
         }
+
+        "edit" => {
+            if args.len() == 3 {
+                let task = &args[2];
+                match task.trim().parse::<i32>() {
+                    Ok(num) => tosk::edit(num),
+                    Err(_) => eprintln!("Not a number!"),
+                }
+            }
+        }
+
+        "reorder" => {
+            if args.len() == 4 {
+                let old_pos = &args[2];
+                let new_pos = &args[3];
+
+                match (
+                    old_pos.trim().parse::<i32>(),
+                    new_pos.trim().parse::<i32>()
+                ) {
+                    (Ok(old), Ok(new)) => {
+                        tosk::reorder(old, new);
+                    }
+                    (Err(_), Err(_)) => {
+                        println!("Wrong parameters, \"{}\" and \"{}\" are not numbers!", old_pos, new_pos);
+                    }
+                    (Err(_), _) => {
+                        println!("Wrong first parameter, \"{}\" is not a number!", old_pos);
+                    }
+                    (_, Err(_)) => {
+                        println!("Wrong second parameter, \"{}\" is not a number!", new_pos);
+                    }
+                }
+            } else {
+                eprintln!("Error: Reorder takes 2 arguments!");
+            }
+        }
+
         "help" => {
             tosk::help();
         }

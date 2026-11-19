@@ -76,6 +76,40 @@ pub fn info(task: i32) {
     }
 }
 
+pub fn edit(task: i32) {
+    let mut json: Vec<DataJson> = read_json();
+
+    let json_length: i32 = json.len().try_into().unwrap();
+    if task > 0 && task < json_length+1 {
+        let index = (json_length - task) as usize;
+        
+        let entry: &mut DataJson = &mut json[index];
+        let number_suffix = match task {
+            1 => "st",
+            2 => "nd",
+            3 => "rd",
+            _ => "th",
+        };
+        println!("Here is the old content of the {}{} entry of the task list:", task, number_suffix);
+        print!("{}\nType in the new content: ", entry.content);
+        io::stdout().flush().unwrap();
+        // without flushing the input is taken first, then the prompt is printed
+
+        let mut input = String::new();
+        match std::io::stdin().read_line(&mut input) {
+            Ok(_) => {
+                entry.content = input.trim().to_string();
+                write_list_to_json(json, &*DATA_FILE_PATH);
+            }
+            Err(_) => {
+                println!("Error on reading input!");
+            }
+        }
+    } else {
+        println!("No such task with that index number!");
+    }
+}
+
 fn create_file(path: &PathBuf, origin: &str) {
     if let Some(parent) = path.parent() {
         if let Err(e) = fs::create_dir_all(parent) {
@@ -138,11 +172,42 @@ pub fn rm_all() {
     }
 }
 
-pub fn remove(task: i32) {
+fn read_json() -> Vec<DataJson> {
     let contents = 
         fs::read_to_string(&*DATA_FILE_PATH).unwrap_or_else(|_| "[]".to_string());
-    let mut json: Vec<DataJson> = 
+    let json: Vec<DataJson> = 
         serde_json::from_str(&contents).unwrap_or_else(|_| Vec::new());
+    json
+}
+
+pub fn reorder(task: i32, new_position: i32) {
+    let mut json: Vec<DataJson> = read_json();
+    match (
+        task > (json.len()) as i32 || task<=0,
+        new_position > (json.len()) as i32 || new_position <= 0
+    ) {
+        (true, true) => {
+            println!("Wrong task number! It must be between 0 and {}", json.len());
+            println!("Wrong position! It must be between 0 and {}", json.len());
+        }
+        (true, false) => {
+            println!("Wrong task number! It must be between 0 and {}", json.len());
+        }
+        (false, true) => {
+            println!("Wrong position! It must be between 0 and {}", json.len());
+        }
+        (false, false) => {
+            let corrected_task = json.len()-1-((task as usize)-1);
+            let corrected_new = json.len()-1-((new_position as usize)-1);
+            let removed = json.remove(corrected_task);
+            json.insert(corrected_new, removed);
+            write_list_to_json(json, &DATA_FILE_PATH);
+        }
+    };
+}
+
+pub fn remove(task: i32) {
+    let mut json = read_json();
 
     if json.len() < 1 {
         create_file(&*DATA_FILE_PATH, "rm");
@@ -175,13 +240,23 @@ fn archive_removed(removed: DataJson) {
     write_to_json(entry, "archive");
 }
 
-fn write_to_json(entry: DataJson, file: &str) {
-    let file_path = match file {
-        "data" => &DATA_FILE_PATH,
-        "archive" => &ARCHIVE_FILE_PATH,
+fn get_file_path(file: &str) -> PathBuf {
+    match file {
+        "data" => DATA_FILE_PATH.to_path_buf(),
+        "archive" => ARCHIVE_FILE_PATH.to_path_buf(),
         _ => panic!("Invalid match option!"),
-    };
+    }
+}
 
+fn write_list_to_json(list: Vec<DataJson>, file_path: &PathBuf) {
+    let json = serde_json::to_string_pretty(&list)
+        .expect("Failed to serialize JSON");
+    fs::write(file_path.as_path(), json)
+        .expect("Unable to write JSON file");
+}
+
+fn write_to_json(entry: DataJson, file: &str) {
+    let file_path = get_file_path(file);
     let mut list: Vec<DataJson> = if Path::new(file_path.as_path()).exists() {
         let text = fs::read_to_string(file_path.as_path())
             .expect("Unable to read JSON file");
@@ -197,9 +272,5 @@ fn write_to_json(entry: DataJson, file: &str) {
     };
 
     list.push(entry);
-
-    let json = serde_json::to_string_pretty(&list)
-        .expect("Failed to serialize JSON");
-    fs::write(file_path.as_path(), json)
-        .expect("Unable to write JSON file");
+    write_list_to_json(list, &file_path);
 }
