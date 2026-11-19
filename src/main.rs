@@ -126,6 +126,8 @@ fn handle_args() {
                         println!("Wrong second parameter, \"{}\" is not a number!", new_pos);
                     }
                 }
+            } else {
+                eprintln!("Error: Reorder takes 2 arguments!");
             }
         }
 

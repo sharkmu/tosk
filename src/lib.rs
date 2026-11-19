@@ -77,10 +77,7 @@ pub fn info(task: i32) {
 }
 
 pub fn edit(task: i32) {
-    let contents = fs::read_to_string(&*DATA_FILE_PATH)
-        .expect("Unable to read JSON file");
-    let mut json: Vec<DataJson> = serde_json::from_str(&contents)
-        .expect("JSON was not well-formatted");
+    let mut json: Vec<DataJson> = read_json();
 
     let json_length: i32 = json.len().try_into().unwrap();
     if task > 0 && task < json_length+1 {
