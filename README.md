@@ -30,7 +30,7 @@ environment.systemPackages = [
 ### Build from Source
 1. Clone the repository:
    ```bash
-   git clone [https://github.com/sharkmu/tosk.git](https://github.com/sharkmu/tosk.git)
+   git clone https://github.com/sharkmu/tosk.git
    cd tosk
    ```
 2. Build and run with Cargo:
@@ -55,7 +55,7 @@ environment.systemPackages = [
 
 Currently, `tosk` supports a single configuration option (`archive_enabled`) to toggle the archive feature. You can modify it in your platform's configuration directory:
 
-* **Linux:** `~/.config/tosk`
+* **Linux:** `$XDG_CONFIG_HOME/tosk` (defaults to `~/.config/tosk` when `XDG_CONFIG_HOME` is unset or not an absolute path)
 * **macOS:** `~/Library/Application Support/tosk`
 * **Windows:** `%APPDATA%\tosk` (typically `C:\Users\<username>\AppData\Roaming\tosk`)
 
