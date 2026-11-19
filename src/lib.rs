@@ -247,15 +247,24 @@ fn archive_removed(removed: DataJson) {
         content: removed.content,
         creation_time: removed.creation_time,
     };
-    write_to_json(entry, &*ARCHIVE_FILE_PATH);
+    append_to_json(entry, &*ARCHIVE_FILE_PATH);
 }
 
+/// It overwrites the save file by design, it is needed for functionality
+/// Use append_to_json() if that is not desired
 fn write_list_to_json(list: Vec<DataJson>, file_path: &PathBuf) {
     let json = serde_json::to_string_pretty(&list)
         .expect("Failed to serialize JSON");
     fs::write(file_path, json)
         .expect("Unable to write JSON file");
 }
+
+fn append_to_json(entry: DataJson, file: &PathBuf) {
+    let mut list = get_list(file);
+    list.push(entry);
+    write_list_to_json(list, &file);
+}
+
 
 fn get_list(file_path: &PathBuf) -> Vec<DataJson>{
     if Path::new(file_path.as_path()).exists() {
@@ -270,10 +279,4 @@ fn get_list(file_path: &PathBuf) -> Vec<DataJson>{
     } else {
         Vec::new()
     }
-}
-
-fn write_to_json(entry: DataJson, file: &PathBuf) {
-    let mut list = get_list(file);
-    list.push(entry);
-    write_list_to_json(list, &file);
 }
