@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::{fs, io};
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -15,6 +16,8 @@ mod config;
 struct DataJson {
     content: String,
     creation_time: String,
+    #[serde(default)]
+    deletion_time: String,
 }
 
 pub static DATA_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| create_path("data"));
@@ -91,7 +94,35 @@ pub fn stat() {
 
     println!("From  those {} tasks only {} are currently active.", total_tasks, active_json_length);
     println!("The other {} tasks have been archived.", archive_json_length);
-    println!("Which means that {}% of the tasks are currently active.", ((active_json_length as f32 / total_tasks as f32) * 100.0).round());
+    println!("Which means that {:.2}% of the tasks are currently active.", (active_json_length as f32 / total_tasks as f32) * 100.0);
+
+
+    let mut created_per_day: HashMap<&str, usize> = HashMap::new();
+    let mut deleted_per_day: HashMap<&str, usize> = HashMap::new();
+
+    for task in archive_json.iter().chain(active_json.iter()) {
+        if let Some(date) = task.creation_time.split_whitespace().next() {
+            *created_per_day.entry(date).or_insert(0) += 1;
+        }
+
+        if let Some(ref del_time) = task.deletion_time.split_whitespace().next() {
+            if let Some(date) = del_time.split_whitespace().next() {
+                *deleted_per_day.entry(date).or_insert(0) += 1;
+            }
+        }
+    }
+
+    if let Some((date, count)) = created_per_day.iter().max_by_key(|&(_, count)| count) {
+        println!("Most tasks created on: {} ({} tasks)", date, count);
+    } else {
+        println!("No tasks created yet.");
+    }
+
+    if let Some((date, count)) = deleted_per_day.iter().max_by_key(|&(_, count)| count) {
+        println!("Most tasks deleted on: {} ({} tasks)", date, count);
+    } else {
+        println!("No tasks deleted yet.");
+    }
 }
 
 pub fn edit(task: i32) {
@@ -147,6 +178,7 @@ pub fn add(content: String) {
         .map(|task| DataJson {
             content: task.to_string(),
             creation_time: formatted_local_time.clone(),
+            deletion_time: String::new(),
         });
 
     let mut list = read_list(&DATA_FILE_PATH);
@@ -171,8 +203,14 @@ pub fn rm_all() {
             let contents = fs::read_to_string(&*DATA_FILE_PATH);
             let json: Vec<DataJson> = serde_json::from_str(&*contents.unwrap())
                 .expect("JSON was not well-formatted");
-            for entry in json.iter() {
-                archive_removed(entry.clone());
+
+            let now = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+            for entry in json {
+                archive_removed(DataJson {
+                    content: entry.content,
+                    creation_time: entry.creation_time,
+                    deletion_time: now.clone(),
+                });
             }
         }
 
@@ -242,6 +280,11 @@ pub fn remove(mut tasks: Vec<i32>) {
         if task > 0 && task <= len {
             let index_to_remove = json.len() - (task as usize);
             let removed = json.remove(index_to_remove);
+            let removed: DataJson = DataJson {
+                content: removed.content,
+                creation_time: removed.creation_time,
+                deletion_time: Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+            };
             modified = true;
 
             if should_archive {
