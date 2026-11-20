@@ -130,6 +130,10 @@ fn main() {
             }
         }
 
+        "stat" | "statistics" => {
+            tosk::stat();
+        }
+
         _ => eprintln!("Unknown command: {}, see \"tosk help\" for more information", command),
     }
 }

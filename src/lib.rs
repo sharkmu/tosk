@@ -80,8 +80,22 @@ pub fn info(task: i32) {
     }
 }
 
+pub fn stat() {
+    let active_json = read_json(&DATA_FILE_PATH);
+    let active_json_length: i32 = active_json.len().try_into().unwrap();
+    let archive_json = read_json(&ARCHIVE_FILE_PATH);
+    let archive_json_length: i32 = archive_json.len().try_into().unwrap();
+
+    let total_tasks = active_json_length + archive_json_length;
+    println!("The total number of tasks that have been created: {}", total_tasks);
+
+    println!("From  those {} tasks only {} are currently active.", total_tasks, active_json_length);
+    println!("The other {} tasks have been archived.", archive_json_length);
+    println!("Which means that {}% of the tasks are currently active.", ((active_json_length as f32 / total_tasks as f32) * 100.0).round());
+}
+
 pub fn edit(task: i32) {
-    let mut json: Vec<DataJson> = read_json();
+    let mut json: Vec<DataJson> = read_json(&DATA_FILE_PATH);
 
     if task > 0 && (task as usize) <= json.len() {
         let index = json.len() - (task as usize);
@@ -167,16 +181,16 @@ pub fn rm_all() {
     }
 }
 
-fn read_json() -> Vec<DataJson> {
+fn read_json(file_path: &Path) -> Vec<DataJson> {
     let contents = 
-        fs::read_to_string(&*DATA_FILE_PATH).unwrap_or_else(|_| "[]".to_string());
+        fs::read_to_string(&*file_path).unwrap_or_else(|_| "[]".to_string());
     let json: Vec<DataJson> = 
         serde_json::from_str(&contents).unwrap_or_else(|_| Vec::new());
     json
 }
 
 pub fn reorder(task: i32, new_position: i32) {
-    let mut json: Vec<DataJson> = read_json();
+    let mut json: Vec<DataJson> = read_json(&DATA_FILE_PATH);
 
     if json.is_empty() {
         println!("The task list is empty. To add a task: \"tosk add [TASK]\"");
@@ -210,7 +224,7 @@ pub fn reorder(task: i32, new_position: i32) {
 }
 
 pub fn remove(mut tasks: Vec<i32>) {
-    let mut json = read_json();
+    let mut json = read_json(&DATA_FILE_PATH);
 
     if json.is_empty() {
         println!("The task list is empty.");
