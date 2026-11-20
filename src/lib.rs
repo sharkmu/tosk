@@ -1,4 +1,5 @@
 use std::{fs, io};
+use std::fs::OpenOptions;
 use std::io::Write;
 use dirs::config_dir;
 use std::path::{Path, PathBuf};
@@ -16,7 +17,7 @@ struct DataJson {
     creation_time: String,
 }
 
-static DATA_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| create_path("data"));
+pub static DATA_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| create_path("data"));
 static ARCHIVE_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| create_path("archive"));
 
 fn create_path(file: &str) -> PathBuf {
@@ -32,7 +33,7 @@ pub fn help() {
 pub fn list() {
     match fs::read_to_string(&*DATA_FILE_PATH) {
         Ok(text) => list_cont(text),
-        Err(_) => create_file(&*DATA_FILE_PATH, "list"),
+        Err(_) => println!("Error reading the task list. The file may not exist or is inaccessible."),
     };
 }
 
@@ -107,28 +108,22 @@ pub fn edit(task: i32) {
     }
 }
 
-fn create_file(path: &PathBuf, origin: &str) {
-    if let Some(parent) = path.parent() {
-        if let Err(e) = fs::create_dir_all(parent) {
-            eprintln!("Failed to create parent directories for {:?}: {}", path, e);
-            return;
-        }
+pub fn create_file() -> io::Result<()> {
+    if let Some(parent) = DATA_FILE_PATH.parent() {
+        fs::create_dir_all(parent)?;
     }
 
-    match origin {
-        "list" => {
-            println!("The task list is empty. To add a task: \"tosk add [TASK]\"")
-        }
-        "rm" => {
-            println!("No such task with that index number!")
-        }
-        _ => {
-            println!("No such origin: {}", origin)
-        }
-    }
+    let mut file = match OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&*DATA_FILE_PATH)
+    {
+        Ok(file) => file,
+        Err(e) if e.kind() == io::ErrorKind::AlreadyExists => return Ok(()),
+        Err(e) => return Err(e),
+    };
 
-    let mut file = fs::File::create(&path).expect("Cannot write to file.");
-    write!(file, "[]").expect("Cannot write to file");
+    file.write_all(b"[]")
 }
 
 pub fn add(content: String) {
@@ -221,26 +216,21 @@ pub fn reorder(task: i32, new_position: i32) {
 pub fn remove(task: i32) {
     let mut json = read_json();
 
-    if json.len() < 1 {
-        create_file(&*DATA_FILE_PATH, "rm");
-    } else {
-        let json_length: i32 = json.len().try_into().unwrap();
-        if task > 0 && task < json_length+1{
-            let index_to_remove = task as usize;
-            let removed = json.remove(json.len() - index_to_remove);
+    let json_length: i32 = json.len().try_into().unwrap();
+    if task > 0 && task < json_length+1{
+        let index_to_remove = task as usize;
+        let removed = json.remove(json.len() - index_to_remove);
 
-            let new_json = serde_json::to_string_pretty(&json)
-                .expect("Failed to serialize JSON");
-            fs::write(&*DATA_FILE_PATH, new_json)
-                .expect("Unable to write JSON file");
+        let new_json = serde_json::to_string_pretty(&json)
+            .expect("Failed to serialize JSON");
+        fs::write(&*DATA_FILE_PATH, new_json)
+            .expect("Unable to write JSON file");
 
-            if config::load() {
-                archive_removed(removed);
-            }
-        } else {
-            println!("No such task with that index number!")
+        if config::load() {
+            archive_removed(removed);
         }
-        
+    } else {
+        println!("No such task with that index number!")    
     }
 }
 

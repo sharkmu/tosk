@@ -1,35 +1,28 @@
-use std::{env, path::PathBuf};
-use tosk;
-use dirs::config_dir;
-use std::fs;
+use std::env;
+use std::{fs, io};
+use tosk::{self, create_file, DATA_FILE_PATH};
 
 fn main() {
-    let os = std::env::consts::OS;
-    let path = config_dir()
-        .unwrap()
-        .join(match os{
-            "linux"=>{"tosk/"}
-            "windows"=>{"tosk\\"}
-            "macos"=>{"tosk/"}
-            _ =>{unimplemented!("handle error or other os correctly")}
-        });
-
-    match fs::read_dir(&path) {
-        Ok(_) => handle_args(),
-        Err(_) => create_folder(&path),
-    }
-}
-
-fn create_folder(path: &PathBuf) {
-    if let Err(e) = fs::create_dir_all(path) {
-        eprintln!("Failed to create folder {:?}: {}", path, e);
-    } else {
-        handle_args();
-    }
-}
-
-fn handle_args() {
     let args: Vec<String> = env::args().collect();
+
+    if args.get(1).map(String::as_str) == Some("help") {
+        tosk::help();
+        return;
+    }
+
+    match fs::read(&*DATA_FILE_PATH) {
+        Ok(_) => {}
+        Err(e) if e.kind() == io::ErrorKind::NotFound => {
+            if let Err(e) = create_file() {
+                eprintln!("Failed to create data file {:?}: {}", &*DATA_FILE_PATH, e);
+                return;
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to access data file {:?}: {}", &*DATA_FILE_PATH, e);
+            return;
+        }
+    }
 
     if args.len() < 2 {
         eprintln!("No args specified! Run \"tosk help\" for information regarding usage.");
@@ -135,9 +128,6 @@ fn handle_args() {
             }
         }
 
-        "help" => {
-            tosk::help();
-        }
         _ => eprintln!("Unknown command: {}, see \"tosk help\" for more information", command),
     }
 }
