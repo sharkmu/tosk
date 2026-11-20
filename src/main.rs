@@ -44,11 +44,7 @@ fn handle_args() {
             tosk::list();
         }
         "add" => {
-            if args.len() == 3 {
-                let task = &args[2];
-                tosk::add(task.to_string());
-            } 
-            else if args.len() > 3 {
+            if args.len() >= 3 {
                 let task = args[2..].join(" ");
                 tosk::add(task);
             } else {

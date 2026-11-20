@@ -1,4 +1,3 @@
-use core::panic;
 use std::{fs, io};
 use std::io::Write;
 use dirs::config_dir;
@@ -17,10 +16,10 @@ struct DataJson {
     creation_time: String,
 }
 
-static DATA_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| get_path("data"));
-static ARCHIVE_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| get_path("archive"));
+static DATA_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| create_path("data"));
+static ARCHIVE_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| create_path("archive"));
 
-fn get_path(file: &str) -> PathBuf {
+fn create_path(file: &str) -> PathBuf {
     config_dir()
         .unwrap()
         .join(format!("tosk/{}.json", file))
@@ -134,13 +133,20 @@ fn create_file(path: &PathBuf, origin: &str) {
 
 pub fn add(content: String) {
     let current_local = Local::now();
-    let formatted_local_time = current_local.format("%Y-%m-%d %H:%M:%S");
-    let entry = DataJson {
-        content: content,
-        creation_time: formatted_local_time.to_string(),
-    };
-    
-    write_to_json(entry, "data");
+    let formatted_local_time = current_local.format("%Y-%m-%d %H:%M:%S").to_string();
+
+    let entries = content
+        .split(';')
+        .map(str::trim)
+        .filter(|task| !task.is_empty())
+        .map(|task| DataJson {
+            content: task.to_string(),
+            creation_time: formatted_local_time.clone(),
+        });
+
+    let mut list = read_list(&DATA_FILE_PATH);
+    list.extend(entries);
+    write_list_to_json(list, &DATA_FILE_PATH);
 }
 
 pub fn rm_all() {
@@ -239,44 +245,22 @@ pub fn remove(task: i32) {
 }
 
 fn archive_removed(removed: DataJson) {
-    let entry = DataJson {
-        content: removed.content,
-        creation_time: removed.creation_time,
-    };
-    write_to_json(entry, "archive");
+    let mut list = read_list(&ARCHIVE_FILE_PATH);
+    list.push(removed);
+    write_list_to_json(list, &ARCHIVE_FILE_PATH);
 }
 
-fn get_file_path(file: &str) -> PathBuf {
-    match file {
-        "data" => DATA_FILE_PATH.to_path_buf(),
-        "archive" => ARCHIVE_FILE_PATH.to_path_buf(),
-        _ => panic!("Invalid match option!"),
-    }
+fn read_list(file_path: &Path) -> Vec<DataJson> {
+    fs::read_to_string(file_path)
+        .ok()
+        .filter(|text| !text.trim().is_empty())
+        .map(|text| serde_json::from_str(&text).expect("JSON was not well-formatted"))
+        .unwrap_or_default()
 }
 
-fn write_list_to_json(list: Vec<DataJson>, file_path: &PathBuf) {
+fn write_list_to_json(list: Vec<DataJson>, file_path: &Path) {
     let json = serde_json::to_string_pretty(&list)
         .expect("Failed to serialize JSON");
-    fs::write(file_path.as_path(), json)
+    fs::write(file_path, json)
         .expect("Unable to write JSON file");
-}
-
-fn write_to_json(entry: DataJson, file: &str) {
-    let file_path = get_file_path(file);
-    let mut list: Vec<DataJson> = if Path::new(file_path.as_path()).exists() {
-        let text = fs::read_to_string(file_path.as_path())
-            .expect("Unable to read JSON file");
-
-        if text.trim().is_empty() {
-            Vec::new()
-        } else {
-            serde_json::from_str(&text)
-                .expect("JSON was not well-formatted")
-        }
-    } else {
-        Vec::new()
-    };
-
-    list.push(entry);
-    write_list_to_json(list, &file_path);
 }
