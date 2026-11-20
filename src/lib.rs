@@ -209,24 +209,37 @@ pub fn reorder(task: i32, new_position: i32) {
     }
 }
 
-pub fn remove(task: i32) {
+pub fn remove(mut tasks: Vec<i32>) {
     let mut json = read_json();
 
-    let json_length: i32 = json.len().try_into().unwrap();
-    if task > 0 && task < json_length+1{
-        let index_to_remove = task as usize;
-        let removed = json.remove(json.len() - index_to_remove);
+    if json.is_empty() {
+        println!("The task list is empty.");
+        return;
+    }
 
-        let new_json = serde_json::to_string_pretty(&json)
-            .expect("Failed to serialize JSON");
-        fs::write(&*DATA_FILE_PATH, new_json)
-            .expect("Unable to write JSON file");
+    tasks.sort_unstable_by(|a, b| b.cmp(a));
+    tasks.dedup();
 
-        if config::load() {
-            archive_removed(removed);
+    let mut modified = false;
+    let should_archive = config::load();
+
+    for task in tasks {
+        let len = json.len() as i32;
+        if task > 0 && task <= len {
+            let index_to_remove = json.len() - (task as usize);
+            let removed = json.remove(index_to_remove);
+            modified = true;
+
+            if should_archive {
+                archive_removed(removed);
+            }
+        } else {
+            println!("No such task with index number: {}", task);
         }
-    } else {
-        println!("No such task with that index number!")    
+    }
+
+    if modified {
+        write_list_to_json(json, &DATA_FILE_PATH);
     }
 }
 

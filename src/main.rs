@@ -46,23 +46,25 @@ fn main() {
         }
         
         "rm" => {
-            if args.len() == 3 {
-                let task = &args[2];
-                if task.starts_with("-") || task.starts_with("--"){
-                    if task.contains("all") {
-                        tosk::rm_all();
-                    } else {
-                        eprintln!("Not a valid parameter")
-                    }
+            if args.len() >= 3 {
+                if args[2] == "--all" || args[2] == "-all" {
+                    tosk::rm_all();
+                    return;
+                } else if args[2].starts_with("-") {
+                    eprintln!("Not a valid parameter. See \"tosk help\" for more information")
+                    return;
                 } else {
-                    match task.trim().parse::<i32>() {
-                        Ok(num) => tosk::remove(num),
-                        Err(_) => eprintln!("Not a number!"),
+                    let mut valid_tasks = Vec::new();
+                    for task in &args[2..] {
+                        match task.trim().parse::<i32>() {
+                            Ok(num) => valid_tasks.push(num),
+                            Err(_) => eprintln!("\"{}\" is not a number!", task),
+                        }
+                    }
+                    if !valid_tasks.is_empty() {
+                        tosk::remove(valid_tasks);
                     }
                 }
-            }
-            else if args.len() > 3{
-                eprintln!("You can only delete one task at a time.")
             } else {
                 eprintln!("Error: No task specified for rm");
             }
