@@ -20,6 +20,16 @@ struct DataJson {
 pub static DATA_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| create_path("data"));
 static ARCHIVE_FILE_PATH: Lazy<PathBuf> = Lazy::new(|| create_path("archive"));
 
+const fn number_suffix(n: usize) -> &'static str {
+    match (n % 100, n % 10) {
+        (11..=13, _) => "th",
+        (_, 1) => "st",
+        (_, 2) => "nd",
+        (_, 3) => "rd",
+        _ => "th",
+    }
+}
+
 fn create_path(file: &str) -> PathBuf {
     config_dir()
         .unwrap()
@@ -62,13 +72,7 @@ pub fn info(task: i32) {
         let index = (json_length - task) as usize;
         
         let entry = &json[index];
-        let number_suffix = match task {
-            1 => "st",
-            2 => "nd",
-            3 => "rd",
-            _ => "th",
-        };
-        println!("Here is the information I found on the {}{} entry of the task list:", task, number_suffix);
+        println!("Here is the information I found on the {}{} entry of the task list:", task, number_suffix(task as usize));
         println!("  - content: {}", entry.content);
         println!("  - creation time: {}", entry.creation_time);
     } else {
@@ -83,15 +87,7 @@ pub fn edit(task: i32) {
         let index = json.len() - (task as usize);
         let entry = &mut json[index];
 
-        let number_suffix = match (task % 100, task % 10) {
-            (11..=13, _) => "th",
-            (_, 1) => "st",
-            (_, 2) => "nd",
-            (_, 3) => "rd",
-            _ => "th",
-        };
-
-        println!("Here is the old content of the {}{} entry of the task list:", task, number_suffix);
+        println!("Here is the old content of the {}{} entry of the task list:", task, number_suffix(task as usize));
         print!("{}\nType in the new content: ", entry.content);
         io::stdout().flush().unwrap();
 
