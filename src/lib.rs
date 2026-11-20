@@ -134,19 +134,18 @@ fn create_file(path: &PathBuf, origin: &str) {
 pub fn add(content: String) {
     let current_local = Local::now();
     let formatted_local_time = current_local.format("%Y-%m-%d %H:%M:%S").to_string();
-    
-    let mut entries: Vec<DataJson> = content
+
+    let entries = content
         .split(';')
         .map(str::trim)
         .filter(|task| !task.is_empty())
         .map(|task| DataJson {
             content: task.to_string(),
             creation_time: formatted_local_time.clone(),
-        })
-        .collect();
+        });
 
-    let mut list = get_list(&DATA_FILE_PATH);
-    list.append(&mut entries);
+    let mut list = read_list(&DATA_FILE_PATH);
+    list.extend(entries);
     write_list_to_json(list, &DATA_FILE_PATH);
 }
 
@@ -246,40 +245,22 @@ pub fn remove(task: i32) {
 }
 
 fn archive_removed(removed: DataJson) {
-    let entry = DataJson {
-        content: removed.content,
-        creation_time: removed.creation_time,
-    };
-    append_to_json(entry, &*ARCHIVE_FILE_PATH);
+    let mut list = read_list(&ARCHIVE_FILE_PATH);
+    list.push(removed);
+    write_list_to_json(list, &ARCHIVE_FILE_PATH);
 }
 
-/// It overwrites the save file by design, it is needed for functionality
-/// Use append_to_json() if that is not desired
-fn write_list_to_json(list: Vec<DataJson>, file_path: &PathBuf) {
+fn read_list(file_path: &Path) -> Vec<DataJson> {
+    fs::read_to_string(file_path)
+        .ok()
+        .filter(|text| !text.trim().is_empty())
+        .map(|text| serde_json::from_str(&text).expect("JSON was not well-formatted"))
+        .unwrap_or_default()
+}
+
+fn write_list_to_json(list: Vec<DataJson>, file_path: &Path) {
     let json = serde_json::to_string_pretty(&list)
         .expect("Failed to serialize JSON");
     fs::write(file_path, json)
         .expect("Unable to write JSON file");
-}
-
-fn append_to_json(entry: DataJson, file: &PathBuf) {
-    let mut list = get_list(file);
-    list.push(entry);
-    write_list_to_json(list, &file);
-}
-
-
-fn get_list(file_path: &PathBuf) -> Vec<DataJson>{
-    if Path::new(file_path.as_path()).exists() {
-        let text = fs::read_to_string(file_path.as_path())
-            .expect("Unable to read JSON file");
-        if text.trim().is_empty() {
-            Vec::new()
-        } else {
-            serde_json::from_str(&text)
-                .expect("JSON was not well-formatted")
-        }
-    } else {
-        Vec::new()
-    }
 }
