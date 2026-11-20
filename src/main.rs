@@ -51,7 +51,7 @@ fn main() {
                     tosk::rm_all();
                     return;
                 } else if args[2].starts_with("-") {
-                    eprintln!("Not a valid parameter. See \"tosk help\" for more information")
+                    eprintln!("Not a valid parameter. See \"tosk help\" for more information");
                     return;
                 } else {
                     let mut valid_tasks = Vec::new();
