@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use chrono::Local;
+use comfy_table::Table;
 
 
 mod help_msg;
@@ -122,6 +123,25 @@ pub fn stat() {
         println!("Most tasks deleted on: {} ({} tasks)", date, count);
     } else {
         println!("No tasks deleted yet.");
+    }
+}
+
+pub fn archive() {
+    let archive_json = read_json(&ARCHIVE_FILE_PATH);
+    let archive_json_length: i32 = archive_json.len().try_into().unwrap();
+
+    if archive_json_length < 1 {
+        println!("The archive is empty.");
+    } else {
+        let mut table = Table::new();
+        table.set_header(vec!["Index", "Content", "Creation Time", "Deletion Time"]);
+
+        let mut index = 1;
+        for entry in archive_json.iter().rev() {
+            table.add_row(vec![format!("{}.", index), entry.content.clone(), entry.creation_time.clone(), entry.deletion_time.clone()]);
+            index += 1;
+        }
+        println!("{table}");
     }
 }
 

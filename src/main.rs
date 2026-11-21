@@ -134,6 +134,10 @@ fn main() {
             tosk::stat();
         }
 
+        "archive" => {
+            tosk::archive();
+        }
+
         _ => eprintln!("Unknown command: {}, see \"tosk help\" for more information", command),
     }
 }
